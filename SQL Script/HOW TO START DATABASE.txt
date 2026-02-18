@@ -1,0 +1,14 @@
+sqllocaldb create "todo-app"
+sqllocaldb info "todo-app"
+sqllocaldb start "todo-app"
+
+To delete, first use:
+sqllocaldb stop "todo-app"
+Then you can delete the instance from SSMS/on your computer as needed
+
+To find your local db instances:
+Win+R (or just search Windows for 'run') then paste in:
+%LOCALAPPDATA%\Microsoft\Microsoft SQL Server Local DB\Instances\
+
+Server name (once created):
+(localdb)\todo-app
