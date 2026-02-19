@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcrypt'
-import { prisma } from '../config/prisma'
-import { Conflict } from '../errors/httpError'
+import prisma from '../config/prisma'
 import { generateAccessToken, generateRefreshToken } from '../utils/token.utils'
-import { Unauthorized } from '../errors/httpError'
+import {Conflict, Unauthorized } from '../errors/httpError'
+import jwt from 'jsonwebtoken'
 
 //REGISTER API METHOD
 export const register = async (
@@ -81,6 +81,42 @@ export const login = async (
     res.json({
       success: true,
       accessToken
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+//Refreshing access token
+export const refresh = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token = req.cookies.refreshToken
+    if (!token) throw Unauthorized()
+
+    const decoded: any = jwt.verify(
+      token,
+      process.env.JWT_REFRESH_SECRET as string
+    )
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    })
+
+    if (!user || !user.refreshToken) throw Unauthorized()
+
+    const isMatch = await bcrypt.compare(token, user.refreshToken)
+
+    if (!isMatch) throw Unauthorized()
+
+    const newAccessToken = generateAccessToken(user.id)
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken
     })
   } catch (error) {
     next(error)
